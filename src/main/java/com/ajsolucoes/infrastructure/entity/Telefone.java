@@ -1,10 +1,7 @@
 package com.ajsolucoes.infrastructure.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
@@ -13,6 +10,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "telefones")
+@Builder
 public class Telefone {
 
     @Id
