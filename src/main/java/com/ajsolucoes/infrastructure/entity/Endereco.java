@@ -11,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 
 @Entity
-@Table(name = "endereco")
+@Table(name = "enderecos")
 @Builder
 public class Endereco {
 
