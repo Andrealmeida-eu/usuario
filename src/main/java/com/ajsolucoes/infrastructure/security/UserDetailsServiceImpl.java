@@ -2,6 +2,7 @@ package com.ajsolucoes.infrastructure.security;
 
 
 import com.ajsolucoes.infrastructure.entity.Usuario;
+import com.ajsolucoes.infrastructure.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
