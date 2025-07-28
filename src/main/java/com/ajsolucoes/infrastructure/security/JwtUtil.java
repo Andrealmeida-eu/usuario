@@ -1,29 +1,69 @@
 package com.ajsolucoes.infrastructure.security;
 
+import com.ajsolucoes.business.dto.in.UsuarioRequestDTO;
+import com.ajsolucoes.infrastructure.entity.Usuario;
+import com.ajsolucoes.infrastructure.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class JwtUtil {
 
     // Chave secreta usada para assinar e verificar tokens JWT
-    private final String secretKey = "sua-chave-secreta-super-segura-que-deve-ser-bem-longa";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    // Gera um token JWT com o nome de usuário e validade de 1 hora
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .setSubject(username) // Define o nome de usuário como o assunto do token
-                .setIssuedAt(new Date()) // Define a data e hora de emissão do token
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // Define a data e hora de expiração (1 hora a partir da emissão)
-                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256) // Converte a chave secreta em bytes e assina o token com ela
-                .compact(); // Constrói o token JWT
+
+
+    public String generateToken(Usuario usuario) {
+        try {
+            // 1. Verificação de segurança da secretKey
+            if (secretKey == null || secretKey.trim().isEmpty()) {
+                throw new IllegalArgumentException("Secret key não pode ser nula ou vazia");
+            }
+
+            // 2. Conversão mais segura da chave
+            SecretKey key = Keys.hmacShaKeyFor(
+                    secretKey.getBytes(StandardCharsets.UTF_8)
+            );
+
+            // 3. Geração do token com tratamento robusto
+            return Jwts.builder()
+                    .subject(usuario.getEmail())
+                    .claim("roles", List.of("ROLE_" + usuario.getRole().name())) // "roles" no plural
+                    .issuedAt(new Date())
+                    .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hora
+                    .signWith(key, Jwts.SIG.HS256) // Especificando o algoritmo explicitamente
+                    .compact();
+        } catch (Exception e) {
+            throw new RuntimeException("Falha ao gerar token JWT", e);
+        }
     }
+
+
+    public List<String> extractRoles(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8))) // Novo método
+                .build()
+                .parseSignedClaims(token) // Novo método (substitui parseClaimsJws)
+                .getPayload(); // Novo método (substitui getBody)
+
+        return claims.get("roles", List.class); // Extrai a lista de roles
+    }
+
+
 
     // Extrai as claims do token JWT (informações adicionais do token)
     public Claims extractClaims(String token) {
@@ -34,7 +74,7 @@ public class JwtUtil {
                 .getBody(); // Retorna o corpo das claims
     }
 
-    // Extrai o nome de usuário do token JWT
+    // Extrai o email do usuário do token JWT
     public String extrairEmailToken(String token) {
         // Obtém o assunto (nome de usuário) das claims do token
         return extractClaims(token).getSubject();

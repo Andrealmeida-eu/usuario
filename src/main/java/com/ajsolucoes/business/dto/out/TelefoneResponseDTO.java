@@ -1,4 +1,4 @@
-package com.ajsolucoes.business.dto;
+package com.ajsolucoes.business.dto.out;
 
 import lombok.*;
 
@@ -8,9 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TelefoneDTO {
+public class TelefoneResponseDTO {
 
-    private Long id;
     private String numero;
     private String ddd;
 

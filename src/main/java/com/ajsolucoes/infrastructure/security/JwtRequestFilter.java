@@ -4,13 +4,18 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // Define a classe JwtRequestFilter, que estende OncePerRequestFilter
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -25,10 +30,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
     }
 
-    //Método chamado uma vez por requisição para processar o filtro
+    // Método chamado uma vez por requisição para processar o filtro
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
+
+        String path = request.getRequestURI();
+        System.out.println("Interceptando: " + path);
+
+        if (path.equals("/login") && request.getMethod().equals("POST")) {
+            System.out.println("Ignorando filtro para: " + path);
+            chain.doFilter(request, response);
+            return;
+        }
+
 
         // Obtém o valor do header "Authorization" da requisição
         final String authorizationHeader = request.getHeader("Authorization");
@@ -46,9 +62,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 // Valida o token JWT
                 if (jwtUtil.validateToken(token, username)) {
+
+                    // Adicione esta linha para incluir as authorities do token
+                    List<String> roles = jwtUtil.extractRoles(token);
+// Convert roles para GrantedAuthority
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(role -> {
+                                // Remove "ROLE_" se estiver duplicado
+                                String cleanRole = role.startsWith("ROLE_") ? role.substring(5) : role;
+                                return new SimpleGrantedAuthority(role);
+                            })
+                            .collect(Collectors.toList());
+
                     // Cria um objeto de autenticação com as informações do usuário
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+                            userDetails, null,authorities);
                     // Define a autenticação no contexto de segurança
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }

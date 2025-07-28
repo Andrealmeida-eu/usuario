@@ -1,4 +1,4 @@
-package com.ajsolucoes.business.dto;
+package com.ajsolucoes.business.dto.out;
 
 import lombok.*;
 
@@ -7,13 +7,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EnderecoDTO {
+public class EnderecoResponseDTO {
 
-    private Long id;
     private String rua;
     private Long numero;
     private String complemento;
     private String cidade;
     private String estado;
     private String cep;
+
 }

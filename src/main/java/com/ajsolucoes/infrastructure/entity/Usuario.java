@@ -1,11 +1,14 @@
 package com.ajsolucoes.infrastructure.entity;
 
+import com.ajsolucoes.infrastructure.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -33,17 +36,42 @@ public class Usuario implements UserDetails {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
-    private List <Endereco> enderecos;
+    private List<Endereco> enderecos;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private List<Telefone> telefones;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
+
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
 
     @Override
     public String getPassword() {
@@ -54,4 +82,5 @@ public class Usuario implements UserDetails {
     public String getUsername() {
         return email;
     }
+
 }
